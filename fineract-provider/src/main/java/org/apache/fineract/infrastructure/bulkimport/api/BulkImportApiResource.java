@@ -30,7 +30,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.bulkimport.data.GlobalEntityType;
@@ -39,7 +39,6 @@ import org.apache.fineract.infrastructure.bulkimport.exceptions.ImportTypeNotFou
 import org.apache.fineract.infrastructure.bulkimport.service.BulkImportWorkbookService;
 import org.apache.fineract.infrastructure.core.api.ApiRequestParameterHelper;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
-import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.documentmanagement.data.DocumentData;
 import org.apache.fineract.infrastructure.documentmanagement.exception.DocumentNotFoundException;
 import org.apache.fineract.infrastructure.documentmanagement.service.DocumentReadPlatformService;
@@ -54,13 +53,12 @@ public class BulkImportApiResource {
 
     private final BulkImportWorkbookService bulkImportWorkbookService;
     private final DocumentReadPlatformService documentReadPlatformService;
-    private final DefaultToApiJsonSerializer<ImportData> toApiJsonSerializer;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
 
     @GET
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveImportDocuments(@Context final UriInfo uriInfo, @QueryParam("entityType") final String entityType) {
-        Collection<ImportData> importData = new ArrayList<>();
+    public List<ImportData> retrieveImportDocuments(@Context final UriInfo uriInfo, @QueryParam("entityType") final String entityType) {
+        List<ImportData> importData = new ArrayList<>();
 
         if (entityType.equals(GlobalEntityType.CLIENT.getCode())) {
             final var importForClientEntity = this.bulkImportWorkbookService.getImports(GlobalEntityType.CLIENTS_ENTITY);
@@ -80,10 +78,10 @@ public class BulkImportApiResource {
                 throw new ImportTypeNotFoundException(entityType);
             }
 
-            importData = this.bulkImportWorkbookService.getImports(type);
+            importData.addAll(this.bulkImportWorkbookService.getImports(type));
         }
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, importData);
+        return importData;
     }
 
     @GET

@@ -37,7 +37,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.core.annotation.AlternativeOperationId;
 import org.apache.fineract.infrastructure.core.api.ApiRequestParameterHelper;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
-import org.apache.fineract.infrastructure.core.serialization.ToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -55,7 +54,6 @@ public class NotificationApiResource {
     private final PlatformSecurityContext context;
     private final NotificationReadPlatformService notificationReadPlatformService;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
-    private final ToApiJsonSerializer<NotificationData> toApiJsonSerializer;
     private final SqlValidator sqlValidator;
 
     @GET
@@ -63,7 +61,7 @@ public class NotificationApiResource {
     @Operation(summary = "Retrieve all Notifications", description = "Returns a paginated list of notifications for the authenticated user, with optional filtering by read status.", tags = {
             "Notification" })
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = NotificationApiResourceSwagger.GetNotificationsResponse.class)))
-    public String getAllNotifications(@Context final UriInfo uriInfo,
+    public Page<NotificationData> getAllNotifications(@Context final UriInfo uriInfo,
             @QueryParam("orderBy") @Parameter(description = "orderBy") final String orderBy,
             @QueryParam("limit") @Parameter(description = "limit") final Integer limit,
             @QueryParam("offset") @Parameter(description = "offset") final Integer offset,
@@ -82,7 +80,7 @@ public class NotificationApiResource {
             notificationData = this.notificationReadPlatformService.getAllNotifications(searchParameters);
         }
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, notificationData);
+        return notificationData;
     }
 
     @PUT

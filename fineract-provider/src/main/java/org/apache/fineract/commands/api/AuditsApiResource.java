@@ -66,7 +66,7 @@ public class AuditsApiResource {
             + "\n" + "Example Requests:\n" + "\n" + "audits\n" + "\n" + "audits?fields=madeOnDate,maker,processingResult\n" + "\n"
             + "audits?makerDateTimeFrom=2013-03-25 08:00:00&makerDateTimeTo=2013-04-04 18:00:00\n" + "\n" + "audits?officeId=1\n" + "\n"
             + "audits?officeId=1&includeJson=true")
-    public String retrieveAuditEntries(@Context final UriInfo uriInfo, @BeanParam AuditRequest auditRequest,
+    public Object retrieveAuditEntries(@Context final UriInfo uriInfo, @BeanParam AuditRequest auditRequest,
             @QueryParam("offset") @Parameter(description = "offset") final Integer offset,
             @QueryParam("limit") @Parameter(description = "limit") final Integer limit,
             @QueryParam("orderBy") @Parameter(description = "orderBy") final String orderBy,
@@ -79,9 +79,9 @@ public class AuditsApiResource {
         final SQLBuilder extraCriteria = auditReadPlatformService.getExtraCriteria(auditRequest);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 
-        return toApiJsonSerializer.serialize(parameters.isPaged()
+        return parameters.isPaged()
                 ? auditReadPlatformService.retrievePaginatedAuditEntries(extraCriteria, settings.isIncludeJson(), parameters)
-                : auditReadPlatformService.retrieveAuditEntries(extraCriteria, settings.isIncludeJson()));
+                : auditReadPlatformService.retrieveAuditEntries(extraCriteria, settings.isIncludeJson());
     }
 
     @GET

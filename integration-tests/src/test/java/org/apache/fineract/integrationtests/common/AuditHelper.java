@@ -21,7 +21,6 @@ package org.apache.fineract.integrationtests.common;
 import static org.apache.fineract.client.feign.util.FeignCalls.ok;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,12 +48,8 @@ public final class AuditHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AuditHelper.class);
 
     // GET /v1/audits can return either a plain array (paged=false) or a
-    // {totalFilteredRecords, pageItems} wrapper (paged=true), so the server resource's
-    // return type is raw String rather than a typed schema (see FINERACT dev ML thread
-    // pending resolution). We always request paged=true and parse out "pageItems" here,
-    // using the same Jackson ObjectMapper the feign client itself uses for every other
-    // successful response (see FineractFeignClientConfig), so date/enum handling stays
-    // consistent with typed calls elsewhere in this file.
+    // {totalFilteredRecords, pageItems} wrapper (paged=true). We always request
+    // paged=true and normalize the Object response to pageItems.
     private static final ObjectMapper MAPPER = ObjectMapperFactory.getShared();
     private static final TypeReference<List<AuditData>> AUDIT_DATA_LIST_TYPE = new TypeReference<>() {};
 
@@ -70,22 +65,24 @@ public final class AuditHelper {
     }
 
     private static List<AuditData> getAuditDetails(final RetrieveAuditEntriesQueryParams queryParams) {
-        return pageItems(ok(() -> FineractFeignClientHelper.getFineractFeignClient().audits()
-                .retrieveAuditEntries(queryParams.orderBy("id").sortOrder("DESC").paged(true))));
+        Object response = ok(() -> FineractFeignClientHelper.getFineractFeignClient().audits()
+                .retrieveAuditEntries(queryParams.orderBy("id").sortOrder("DESC").paged(true)));
+        return pageItems(response);
     }
 
     public static List<AuditData> getAuditDetails(final int limit) {
-        return pageItems(ok(() -> FineractFeignClientHelper.getFineractFeignClient().audits()
-                .retrieveAuditEntries(new RetrieveAuditEntriesQueryParams().limit(limit).paged(true))));
+        Object response = ok(() -> FineractFeignClientHelper.getFineractFeignClient().audits()
+                .retrieveAuditEntries(new RetrieveAuditEntriesQueryParams().limit(limit).paged(true)));
+        return pageItems(response);
     }
 
-    private static List<AuditData> pageItems(final String response) {
-        try {
-            final JsonNode pageItemsNode = MAPPER.readTree(response).get("pageItems");
-            return MAPPER.convertValue(pageItemsNode, AUDIT_DATA_LIST_TYPE);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Unable to parse audits list response: " + response, e);
+    private static List<AuditData> pageItems(final Object response) {
+        final JsonNode responseNode = MAPPER.valueToTree(response);
+        final JsonNode pageItemsNode = responseNode.isObject() ? responseNode.get("pageItems") : responseNode;
+        if (pageItemsNode == null || pageItemsNode.isNull()) {
+            throw new IllegalStateException("Unable to find pageItems in audits list response: " + response);
         }
+        return MAPPER.convertValue(pageItemsNode, AUDIT_DATA_LIST_TYPE);
     }
 
     public static AuditSearchData getAuditSearchTemplate() {

@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.fineract.client.models.CommandProcessingResult;
 import org.apache.fineract.client.models.QuestionData;
 import org.apache.fineract.client.models.ResponseData;
 import org.apache.fineract.client.models.SurveyData;
@@ -67,7 +68,7 @@ public class SurveyHelper {
         return ok(() -> FineractFeignClientHelper.getFineractFeignClient().spmSurveys().fetchAllSurveys(true));
     }
 
-    public String updateSurvey(Long surveyId, SurveyData surveyData) {
+    public CommandProcessingResult updateSurvey(Long surveyId, SurveyData surveyData) {
         return ok(() -> FineractFeignClientHelper.getFineractFeignClient().spmSurveys().editSurvey(surveyId, surveyData));
     }
 

@@ -100,6 +100,7 @@ public class LoanDisbursementMakerCheckerIntegrationTest extends FeignLoanTestBa
         }
     }
 
+    @SuppressWarnings("deprecation")
     private void enableMakerCheckerForDisbursement(boolean enabled) {
         globalConfigurationHelper.updateConfigurationByName(GlobalConfigurationConstants.MAKER_CHECKER, enabled);
         globalConfigurationHelper.updateConfigurationByName(GlobalConfigurationConstants.ENABLE_SAME_MAKER_CHECKER, false);

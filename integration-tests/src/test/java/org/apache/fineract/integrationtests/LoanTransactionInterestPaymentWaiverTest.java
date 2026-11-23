@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -1655,7 +1656,8 @@ public class LoanTransactionInterestPaymentWaiverTest extends FeignLoanTestBase 
             assertEquals(200, waiverResponse.getStatusCode());
             assertNotNull(waiverResponse.getBody());
 
-            Map<String, Object> waiverResponseBody = GSON.fromJson(waiverResponse.getBody(), Map.class);
+            Map<String, Object> waiverResponseBody = GSON.fromJson(waiverResponse.getBody(),
+                    new TypeToken<Map<String, Object>>() {}.getType());
             Object resourceExternalId = waiverResponseBody.get("resourceExternalId");
 
             BatchResponse getResponse = responses.get(1);
@@ -1672,7 +1674,7 @@ public class LoanTransactionInterestPaymentWaiverTest extends FeignLoanTestBase 
             }
 
             assertNotNull(getResponse.getBody());
-            Map<String, Object> getResponseBody = GSON.fromJson(getResponse.getBody(), Map.class);
+            Map<String, Object> getResponseBody = GSON.fromJson(getResponse.getBody(), new TypeToken<Map<String, Object>>() {}.getType());
             Object retrievedExternalId = getResponseBody.get("externalId");
             assertEquals(transactionExternalId, retrievedExternalId);
         });
@@ -1748,7 +1750,8 @@ public class LoanTransactionInterestPaymentWaiverTest extends FeignLoanTestBase 
             assertEquals(200, waiverResponse.getStatusCode());
             assertNotNull(waiverResponse.getBody());
 
-            Map<String, Object> waiverResponseBody = GSON.fromJson(waiverResponse.getBody(), Map.class);
+            Map<String, Object> waiverResponseBody = GSON.fromJson(waiverResponse.getBody(),
+                    new TypeToken<Map<String, Object>>() {}.getType());
             Object resourceExternalId = waiverResponseBody.get("resourceExternalId");
 
             BatchResponse getResponse = responses.get(1);
@@ -1763,7 +1766,7 @@ public class LoanTransactionInterestPaymentWaiverTest extends FeignLoanTestBase 
             }
 
             assertNotNull(getResponse.getBody());
-            Map<String, Object> getResponseBody = GSON.fromJson(getResponse.getBody(), Map.class);
+            Map<String, Object> getResponseBody = GSON.fromJson(getResponse.getBody(), new TypeToken<Map<String, Object>>() {}.getType());
             Object retrievedExternalId = getResponseBody.get("externalId");
             assertEquals(transactionExternalId, retrievedExternalId);
         });
@@ -1855,7 +1858,8 @@ public class LoanTransactionInterestPaymentWaiverTest extends FeignLoanTestBase 
             assertEquals(200, waiverResponse.getStatusCode());
             assertNotNull(waiverResponse.getBody());
 
-            Map<String, Object> waiverResponseBody = GSON.fromJson(waiverResponse.getBody(), Map.class);
+            Map<String, Object> waiverResponseBody = GSON.fromJson(waiverResponse.getBody(),
+                    new TypeToken<Map<String, Object>>() {}.getType());
             Object resourceExternalId = waiverResponseBody.get("resourceExternalId");
 
             BatchResponse getResponse = responses.get(1);
@@ -1870,7 +1874,7 @@ public class LoanTransactionInterestPaymentWaiverTest extends FeignLoanTestBase 
             }
 
             assertNotNull(getResponse.getBody());
-            Map<String, Object> getResponseBody = GSON.fromJson(getResponse.getBody(), Map.class);
+            Map<String, Object> getResponseBody = GSON.fromJson(getResponse.getBody(), new TypeToken<Map<String, Object>>() {}.getType());
             Object retrievedExternalId = getResponseBody.get("externalId");
             assertEquals(transactionExternalId, retrievedExternalId);
         });
@@ -1957,7 +1961,8 @@ public class LoanTransactionInterestPaymentWaiverTest extends FeignLoanTestBase 
             BatchResponse waiverResponse = responses.get(0);
             assertEquals(200, waiverResponse.getStatusCode());
 
-            Map<String, Object> waiverResponseBody = GSON.fromJson(waiverResponse.getBody(), Map.class);
+            Map<String, Object> waiverResponseBody = GSON.fromJson(waiverResponse.getBody(),
+                    new TypeToken<Map<String, Object>>() {}.getType());
             Object resourceExternalId = waiverResponseBody.get("resourceExternalId");
 
             if (resourceExternalId == null) {
@@ -1971,7 +1976,7 @@ public class LoanTransactionInterestPaymentWaiverTest extends FeignLoanTestBase 
             }
 
             assertNotNull(getResponse.getBody());
-            Map<String, Object> getResponseBody = GSON.fromJson(getResponse.getBody(), Map.class);
+            Map<String, Object> getResponseBody = GSON.fromJson(getResponse.getBody(), new TypeToken<Map<String, Object>>() {}.getType());
             Object retrievedExternalId = getResponseBody.get("externalId");
             assertEquals(transactionExternalId, retrievedExternalId);
         });

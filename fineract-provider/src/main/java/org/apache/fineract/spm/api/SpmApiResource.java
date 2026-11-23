@@ -18,7 +18,6 @@
  */
 package org.apache.fineract.spm.api;
 
-import com.google.gson.Gson;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -37,10 +36,10 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.core.annotation.AlternativeOperationId;
+import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
 import org.apache.fineract.spm.data.SurveyData;
@@ -103,11 +102,11 @@ public class SpmApiResource {
     @Operation(summary = "Create a Survey", description = "Adds a new survey to collect client related data.\n" + "\n"
             + "Mandatory Fields\n" + "\n" + "countryCode, key, name, questions, responses, sequenceNo, text, description")
     @ApiResponses({ @ApiResponse(responseCode = "200", description = "OK") })
-    public String createSurvey(@Parameter(description = "Create survey") final SurveyData surveyData) {
+    public CommandProcessingResult createSurvey(@Parameter(description = "Create survey") final SurveyData surveyData) {
         this.securityContext.authenticatedUser();
         final Survey survey = SurveyMapper.map(surveyData, new Survey());
         this.spmService.createSurvey(survey);
-        return getResponse(survey.getId());
+        return CommandProcessingResult.resourceResult(survey.getId());
 
     }
 
@@ -116,12 +115,12 @@ public class SpmApiResource {
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     @Transactional
-    public String editSurvey(@PathParam("id") final Long id, final SurveyData surveyData) {
+    public CommandProcessingResult editSurvey(@PathParam("id") final Long id, final SurveyData surveyData) {
         this.securityContext.authenticatedUser();
         final Survey surveyToUpdate = this.spmService.findById(id);
         final Survey survey = SurveyMapper.map(surveyData, surveyToUpdate);
         this.spmService.updateSurvey(survey);
-        return getResponse(survey.getId());
+        return CommandProcessingResult.resourceResult(survey.getId());
     }
 
     @POST
@@ -143,10 +142,4 @@ public class SpmApiResource {
 
     }
 
-    private String getResponse(Long id) {
-        Gson gson = new Gson();
-        HashMap<String, Object> response = new HashMap<>();
-        response.put("resourceId", id);
-        return gson.toJson(response);
-    }
 }

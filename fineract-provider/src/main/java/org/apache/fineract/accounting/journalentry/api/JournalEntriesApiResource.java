@@ -62,7 +62,6 @@ import org.apache.fineract.infrastructure.core.data.DateFormat;
 import org.apache.fineract.infrastructure.core.data.UploadRequest;
 import org.apache.fineract.infrastructure.core.exception.UnrecognizedQueryParamException;
 import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
-import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.apache.fineract.infrastructure.core.service.Page;
 import org.apache.fineract.infrastructure.core.service.SearchParameters;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
@@ -90,7 +89,6 @@ public class JournalEntriesApiResource {
 
     private final PlatformSecurityContext context;
     private final JournalEntryReadPlatformService journalEntryReadPlatformService;
-    private final DefaultToApiJsonSerializer<Object> apiJsonSerializerService;
     private final ApiRequestParameterHelper apiRequestParameterHelper;
     private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
     private final BulkImportWorkbookService bulkImportWorkbookService;
@@ -109,7 +107,7 @@ public class JournalEntriesApiResource {
                     + "journalentries?loanId=12\n" + "\n" + "journalentries?savingsId=24")
     @AlternativeOperationId("retrieveAll_1")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.GetJournalEntriesTransactionIdResponse.class)))
-    public String retrieveAll(@Context final UriInfo uriInfo,
+    public Page<JournalEntryData> retrieveAll(@Context final UriInfo uriInfo,
             @QueryParam("officeId") @Parameter(description = "officeId") final Long officeId,
             @QueryParam("glAccountId") @Parameter(description = "glAccountId") final Long glAccountId,
             @QueryParam("manualEntriesOnly") @Parameter(description = "manualEntriesOnly") final Boolean onlyManualEntries,
@@ -163,7 +161,7 @@ public class JournalEntriesApiResource {
                 onlyManualEntries, fromDate, toDate, submittedOnDateFrom, submittedOnDateTo, transactionId, entityType,
                 associationParametersData);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.apiJsonSerializerService.serialize(settings, glJournalEntries, RESPONSE_DATA_PARAMETERS);
+        return glJournalEntries;
     }
 
     @GET
@@ -173,7 +171,7 @@ public class JournalEntriesApiResource {
             + "journalentries/1\n" + "\n" + "\n" + "\n" + "journalentries/1?fields=officeName,glAccountId,entryType,amount\n" + "\n"
             + "journalentries/1?runningBalance=true\n" + "\n" + "journalentries/1?transactionDetails=true")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.JournalEntryTransactionItem.class)))
-    public String retrieveJournalEntryById(
+    public JournalEntryData retrieveJournalEntryById(
             @PathParam("journalEntryId") @Parameter(description = "journalEntryId") final Long journalEntryId,
             @Context final UriInfo uriInfo,
             @QueryParam("runningBalance") @Parameter(description = "runningBalance") final boolean runningBalance,
@@ -186,7 +184,7 @@ public class JournalEntriesApiResource {
                 associationParametersData);
 
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.apiJsonSerializerService.serialize(settings, glJournalEntryData, RESPONSE_DATA_PARAMETERS);
+        return glJournalEntryData;
     }
 
     @POST
@@ -200,7 +198,7 @@ public class JournalEntriesApiResource {
                     + "paymentTypeId, accountNumber, checkNumber, routingCode, receiptNumber, bankNumber")
     @RequestBody(content = @Content(schema = @Schema(implementation = JournalEntryCommand.class)))
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.PostJournalEntriesResponse.class)))
-    public String createGLJournalEntry(@Parameter(hidden = true) final String jsonRequestBody,
+    public CommandProcessingResult createGLJournalEntry(@Parameter(hidden = true) final String jsonRequestBody,
             @QueryParam("command") @Parameter(description = "command") final String commandParam) {
 
         CommandProcessingResult result;
@@ -216,7 +214,7 @@ public class JournalEntriesApiResource {
             final CommandWrapper commandRequest = new CommandWrapperBuilder().createJournalEntry().withJson(jsonRequestBody).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         }
-        return this.apiJsonSerializerService.serialize(result);
+        return result;
     }
 
     @POST
@@ -228,7 +226,7 @@ public class JournalEntriesApiResource {
                     + "Mandatory Fields\n" + "officeId")
     @RequestBody(content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.PostJournalEntriesTransactionIdRequest.class)))
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = JournalEntriesApiResourceSwagger.PostJournalEntriesTransactionIdResponse.class)))
-    public String createReversalJournalEntry(@Parameter(hidden = true) final String jsonRequestBody,
+    public CommandProcessingResult createReversalJournalEntry(@Parameter(hidden = true) final String jsonRequestBody,
             @PathParam("transactionId") @Parameter(description = "transactionId") final String transactionId,
             @QueryParam("command") @Parameter(description = "command") final String commandParam) {
         CommandProcessingResult result;
@@ -240,7 +238,7 @@ public class JournalEntriesApiResource {
             throw new UnrecognizedQueryParamException("command", commandParam);
         }
 
-        return this.apiJsonSerializerService.serialize(result);
+        return result;
     }
 
     @GET
@@ -248,15 +246,15 @@ public class JournalEntriesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve Journal Entries for Provisioning", description = "Returns journal entries related to provisioning entries based on entry ID.", tags = {
             "Journal Entries" })
-    public String retrieveJournalEntries(@QueryParam("offset") final Integer offset, @QueryParam("limit") final Integer limit,
-            @QueryParam("entryId") final Long entryId, @Context final UriInfo uriInfo) {
+    public Page<JournalEntryData> retrieveJournalEntries(@QueryParam("offset") final Integer offset,
+            @QueryParam("limit") final Integer limit, @QueryParam("entryId") final Long entryId, @Context final UriInfo uriInfo) {
         this.context.authenticatedUser();
         String transactionId = "P" + entryId;
         SearchParameters params = SearchParameters.builder().limit(limit).offset(offset).build();
         Page<JournalEntryData> entries = this.journalEntryReadPlatformService.retrieveAll(params, null, null, null, null, null, null,
                 transactionId, PortfolioProductType.PROVISIONING.getValue(), null);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.apiJsonSerializerService.serialize(settings, entries, RESPONSE_DATA_PARAMETERS);
+        return entries;
     }
 
     @GET
@@ -264,14 +262,14 @@ public class JournalEntriesApiResource {
     @Produces({ MediaType.APPLICATION_JSON })
     @Operation(summary = "Retrieve Opening Balance", description = "Returns the opening balance for a specific office and currency.", tags = {
             "Journal Entries" })
-    public String retrieveOpeningBalance(@Context final UriInfo uriInfo, @QueryParam("officeId") final Long officeId,
+    public OfficeOpeningBalancesData retrieveOpeningBalance(@Context final UriInfo uriInfo, @QueryParam("officeId") final Long officeId,
             @QueryParam("currencyCode") final String currencyCode) {
 
         this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSION);
         final OfficeOpeningBalancesData officeOpeningBalancesData = this.journalEntryReadPlatformService
                 .retrieveOfficeOpeningBalances(officeId, currencyCode);
         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.apiJsonSerializerService.serialize(settings, officeOpeningBalancesData);
+        return officeOpeningBalancesData;
     }
 
     private boolean is(final String commandParam, final String commandValue) {
@@ -295,11 +293,11 @@ public class JournalEntriesApiResource {
             @Content(mediaType = MediaType.MULTIPART_FORM_DATA, schema = @Schema(implementation = UploadRequest.class)) })
     @Operation(summary = "Upload journal entries template", description = "Uploads a filled Excel template to create multiple journal entries in bulk.", tags = {
             "Journal Entries" })
-    public String postJournalEntriesTemplate(@FormDataParam("file") InputStream uploadedInputStream,
+    public CommandProcessingResult postJournalEntriesTemplate(@FormDataParam("file") InputStream uploadedInputStream,
             @FormDataParam("file") FormDataContentDisposition fileDetail, @FormDataParam("locale") final String locale,
             @FormDataParam("dateFormat") final String dateFormat) {
         final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.GL_JOURNAL_ENTRIES.toString(),
                 uploadedInputStream, fileDetail, locale, dateFormat);
-        return this.apiJsonSerializerService.serialize(importDocumentId);
+        return CommandProcessingResult.resourceResult(importDocumentId);
     }
 }
